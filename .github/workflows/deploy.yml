@@ -10,21 +10,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
     - name: Setup SSH
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
 
-    - name: Test SSH Connection
+    - name: Test SSH
       run: |
-        ssh -o StrictHostKeyChecking=no polindra123@${{ secrets.SERVER_IP }} "echo SSH CONNECTED"
+        ssh -i ~/.ssh/id_rsa polindra123@${{ secrets.SERVER_IP }} "whoami"
 
-    - name: Deploy to Server
+    - name: Deploy
       run: |
-        rsync -avz --delete ./ \
-        polindra123@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_PATH }}
+        rsync -avz -e "ssh -i ~/.ssh/id_rsa" ./ polindra123@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_PATH }}
